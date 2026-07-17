@@ -22,16 +22,19 @@ def get_file_content(working_file_path: str, file_path: str) -> str:
     except Exception as e:
         return f'Error: An error occurred while reading file "{file_path}": {str(e)}'
 
-schema_get_file_content = types.FunctionDeclaration(
-    name="get_file_content",
-    description="Print the contents of a file in a specified directory relative to the working directory.  If the file is larger than the maximum content size, the contents are truncaterd to the character limit {MAX_CHARS}.",
-    parameters=types.Schema(
-        type=types.Type.OBJECT,
-        properties={
-            "file_path": types.Schema(
-                type=types.Type.STRING,
-                description="Path to the file to read, relative to the working directory",
-            ),
+schema_get_file_content = {
+    "type": "function",
+    "function": {
+        "name": "get_file_content",
+        "description": "Print the contents of a file in a specified directory relative to the working directory.  If the file is larger than the maximum content size, the contents are truncaterd to the character limit {MAX_CHARS}.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+            "file_path": {
+                "type": "string",
+                "description": "Path to the file to read, relative to the working directory",
+                },
+            },
         },
-    ),
-)
+    },
+}

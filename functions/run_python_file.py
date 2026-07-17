@@ -38,22 +38,25 @@ def run_python_file(working_directory: str, file_path: str, args: list[str] | No
     except Exception as e:
         return f'Error: executing Python file: {e}'
 
-# schema_run_python_file = types.FunctionDeclaration(
-#     name="run_python_file",
-#     description="Print the contents of a file in a specified directory relative to the working directory.  If the file is larger than the maximum content size, the contents are truncaterd to the character limit {MAX_CHARS}.",
-#     parameters=types.Schema(
-#         type=types.Type.OBJECT,
-#         required=["file_path"],
-#         properties={
-#             "file_path": types.Schema(
-#                 type=types.Type.STRING,
-#                 description="Path to the Python file to execute, relative to the working directory",
-#             ),
-#             "args": types.Schema(
-#                 type=types.Type.ARRAY,
-#                 items=types.Type.STRING,
-#                 description="Optional list of string arguments to pass to the Python script when executing",
-#             ),
-#         },
-#     ),
-# )
+schema_run_python_file = {
+    "type": "function",
+    "function": {
+        "name": "run_python_file",
+        "description": "Execute a Python file in a specified directory relative to the working directory, optionally passing arguments to the script.",
+        "required": ["file_path"],
+        "parameters": {
+            "type": "object",
+            "properties": {
+            "file_path": {
+                "type": "string",
+                "description": "Path to the Python file to execute, relative to the working directory",
+                },
+            "args": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "Optional list of string arguments to pass to the Python script when executing",
+                },
+            },
+        },
+    },
+}

@@ -42,7 +42,7 @@ schema_run_python_file = {
     "type": "function",
     "function": {
         "name": "run_python_file",
-        "description": "Execute a Python file in a specified directory relative to the working directory, optionally passing arguments to the script.",
+        "description": "Executes a specified Python file within the working directory and returns its output",
         "required": ["file_path"],
         "parameters": {
             "type": "object",

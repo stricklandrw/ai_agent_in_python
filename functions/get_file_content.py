@@ -26,7 +26,7 @@ schema_get_file_content = {
     "type": "function",
     "function": {
         "name": "get_file_content",
-        "description": "Print the contents of a file in a specified directory relative to the working directory.  If the file is larger than the maximum content size, the contents are truncaterd to the character limit {MAX_CHARS}.",
+        "description": f"Retrieves the content (at most {MAX_CHARS} characters) of a specified file within the working directory",
         "parameters": {
             "type": "object",
             "properties": {

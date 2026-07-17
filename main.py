@@ -1,49 +1,69 @@
 import os
 import argparse
+import json
 from dotenv import load_dotenv
-from google import genai
-from google.genai import types
+from openai import OpenAI
 from prompts import system_prompt
 from call_function import available_functions
 
-load_dotenv()
-api_key = os.environ.get("GEMINI_API_KEY")
 
 
-def main():
-    if not api_key:
-        raise RuntimeError("GEMINI_API_KEY environment variable not found")
-    client = genai.Client(api_key=api_key)
-#   Hardcoded user prompt for testing - replace with argparse or other input method as needed
-#   user_prompt = "Why is Boot.dev such a great place to learn backend development? Use one paragraph maximum."
-
-    model_name = "gemini-2.5-flash"
-    parser = argparse.ArgumentParser(description="Generate content using Gemini API")
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Generate content using Openrouter API")
     parser.add_argument("user_prompt", type=str, help="User prompt")
     parser.add_argument("--verbose", action="store_true", help="Enable verbose output")
     args = parser.parse_args()
-    messages = [types.Content(role="user", parts=[types.Part(text=args.user_prompt)])]
 
-    response = client.models.generate_content(
-        model=model_name,
-        contents=messages,
-        config=types.GenerateContentConfig(
-            tools=[available_functions],
-            system_instruction=system_prompt,
-            temperature=0)
-        )
+    load_dotenv()
+    api_key = os.environ.get("OPENROUTER_API_KEY")
+    if not api_key:
+        raise RuntimeError("OPENROUTER_API_KEY environment variable not found")
 
-    if response.usage_metadata is not None:
-        if args.verbose is True:
-            print(f"User prompt: {args.user_prompt}\nPrompt tokens: {response.usage_metadata.prompt_token_count}\nResponse tokens: {response.usage_metadata.candidates_token_count}")
-    else:
-        raise RuntimeError("Response usage metadata is None - Likely an error in the API response")
+    client = OpenAI(
+        base_url="https://openrouter.ai/api/v1",
+        api_key=api_key,
+    )
+    messages = [
+        {
+            "role": "system",
+            "content": system_prompt,
+        },
+        {
+            "role": "user",
+            "content": args.user_prompt,
+        }
+    ]
+    if args.verbose:
+        print(f"User prompt: {args.user_prompt}\n")
 
-    if response.function_calls is not None:
-        for function_call in response.function_calls:
-            print(f"Calling function: {function_call.name}({function_call.args})")
-    else:
-        print(f"Response:\n{response.text}")
+    generate_content(client, messages, args.verbose)
+
+def generate_content(client: OpenAI, messages: list, verbose: bool = False) -> None:
+    response = client.chat.completions.create(
+        model="openrouter/free",
+        messages=messages,
+        tools=available_functions,
+        temperature=0,
+    )
+
+    if not response.usage:
+        raise RuntimeError("API response appears to be malformed")
+
+    if verbose:
+        print("Prompt tokens:", response.usage.prompt_tokens)
+        print("Response tokens:", response.usage.completion_tokens)
+
+    message = response.choices[0].message
+    if not message.tool_calls:
+        print("Response:")
+        print(message.content)
+        return
+
+    for tool_call in message.tool_calls:
+        if tool_call.type != "function":
+            continue
+        function_args = json.loads(tool_call.function.arguments or "{}")
+        print(f"Calling function: {tool_call.function.name}({function_args})")
 
 
 if __name__ == "__main__":

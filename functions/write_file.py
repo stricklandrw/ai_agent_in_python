@@ -25,19 +25,19 @@ schema_write_file = {
     "function": {
         "name": "write_file",
         "description": "Writes text content to a specified file within the working directory (overwriting if the file exists)",
-        "required": ["file_path", "content"],
         "parameters": {
             "type": "object",
             "properties": {
-            "file_path": {
-                "type": "string",
-                "description": "Path to the file to write to, relative to the working directory",
+                "file_path": {
+                    "type": "string",
+                    "description": "Path to the file to write to, relative to the working directory",
                 },
-            "content": {
-                "type": "string",
-                "description": "Text content to write to the file",
+                "content": {
+                    "type": "string",
+                    "description": "Text content to write to the file",
                 },
             },
+            "required": ["file_path", "content"],
         },
     },
 }

@@ -1,5 +1,4 @@
 import os
-from google.genai import types
 
 def get_files_info(working_directory: str, directory: str = ".") -> str:
     try:
@@ -31,9 +30,9 @@ schema_get_files_info = {
         "parameters": {
             "type": "object",
             "properties": {
-            "directory": {
-                "type": "string",
-                "description": "Directory path to list files from, relative to the working directory (default is the working directory itself)",
+                "directory": {
+                    "type": "string",
+                    "description": "Directory path to list files from, relative to the working directory (default is the working directory itself)",
                 },
             },
         },

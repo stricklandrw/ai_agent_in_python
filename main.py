@@ -37,36 +37,44 @@ def main() -> None:
         print(f"User prompt: {args.user_prompt}\n")
 
     generate_content(client, messages, args.verbose)
+    
 
 def generate_content(client: OpenAI, messages: list, verbose: bool = False) -> None:
-    response = client.chat.completions.create(
-        model="openrouter/free",
-        messages=messages,
-        tools=available_functions,
-#        temperature=0,
-    )
+    for _ in range(20):
+        response = client.chat.completions.create(
+            model = "openrouter/free",
+            messages = messages,
+            tools = available_functions,
+#            temperature=0,
+        )
 
-    if not response.usage:
-        raise RuntimeError("API response appears to be malformed")
+        if not response.usage:
+            raise RuntimeError("API response appears to be malformed")
 
-    if verbose:
-        print("Prompt tokens:", response.usage.prompt_tokens)
-        print("Response tokens:", response.usage.completion_tokens)
-
-    message = response.choices[0].message
-    if not message.tool_calls:
-        print("Response:")
-        print(message.content)
-        return
-
-    for tool_call in message.tool_calls:
-        if tool_call.type != "function":
-            continue
-        result_message = call_function(tool_call, verbose)
-        if not result_message["content"]:
-            raise RuntimeError(f"Empty function response for {tool_call.function.name}")
         if verbose:
-            print(f"-> {result_message['content']}")
+            print("Prompt tokens:", response.usage.prompt_tokens)
+            print("Response tokens:", response.usage.completion_tokens)
+
+        message = response.choices[0].message
+        messages.append(message)
+        if not message.tool_calls:
+            print("Final response:")
+            print(message.content)
+            return
+
+        for tool_call in message.tool_calls:
+            if tool_call.type != "function":
+                continue
+            result_message = call_function(tool_call, verbose)
+            if not result_message["content"]:
+                raise RuntimeError(f"Empty function response for {tool_call.function.name}")
+            if verbose:
+                print(f"-> {result_message['content']}")
+                break
+            messages.append(result_message)
+
+    print(f"Maximum iterations reached without final response.")
+    exit(1)
 
 if __name__ == "__main__":
     main()

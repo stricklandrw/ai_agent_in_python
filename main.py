@@ -1,6 +1,7 @@
 import os
 import argparse
 import json
+from config import MAX_ITERS
 from dotenv import load_dotenv
 from openai import OpenAI
 from call_function import available_functions, call_function
@@ -36,45 +37,52 @@ def main() -> None:
     if args.verbose:
         print(f"User prompt: {args.user_prompt}\n")
 
-    generate_content(client, messages, args.verbose)
+    for _ in range(MAX_ITERS):
+        try:
+            final_response = generate_content(client, messages, args.verbose)
+            if final_response:
+                print("Final response:")
+                print(final_response)
+                return
+        except Exception as e:
+            print(f"Error in generate content: {e}")
     
-
-def generate_content(client: OpenAI, messages: list, verbose: bool = False) -> None:
-    for _ in range(20):
-        response = client.chat.completions.create(
-            model = "openrouter/free",
-            messages = messages,
-            tools = available_functions,
-#            temperature=0,
-        )
-
-        if not response.usage:
-            raise RuntimeError("API response appears to be malformed")
-
-        if verbose:
-            print("Prompt tokens:", response.usage.prompt_tokens)
-            print("Response tokens:", response.usage.completion_tokens)
-
-        message = response.choices[0].message
-        messages.append(message)
-        if not message.tool_calls:
-            print("Final response:")
-            print(message.content)
-            return
-
-        for tool_call in message.tool_calls:
-            if tool_call.type != "function":
-                continue
-            result_message = call_function(tool_call, verbose)
-            if not result_message["content"]:
-                raise RuntimeError(f"Empty function response for {tool_call.function.name}")
-            if verbose:
-                print(f"-> {result_message['content']}")
-                break
-            messages.append(result_message)
-
     print(f"Maximum iterations reached without final response.")
     exit(1)
+
+
+def generate_content(client: OpenAI, messages: list, verbose: bool = False) -> str | None:
+    response = client.chat.completions.create(
+        model = "openrouter/free",
+        messages = messages,
+        tools = available_functions,
+#            temperature=0,
+    )
+
+    if not response.usage:
+        raise RuntimeError("API response appears to be malformed")
+
+    if verbose:
+        print("Prompt tokens:", response.usage.prompt_tokens)
+        print("Response tokens:", response.usage.completion_tokens)
+
+    message = response.choices[0].message
+    messages.append(message)
+
+    if not message.tool_calls:
+        return message.content
+
+    for tool_call in message.tool_calls:
+        if tool_call.type != "function":
+            continue
+        result_message = call_function(tool_call, verbose)
+        if not result_message["content"]:
+            raise RuntimeError(f"Empty function response for {tool_call.function.name}")
+        if verbose:
+            print(f"-> {result_message['content']}")
+        messages.append(result_message)
+
+    return None
 
 if __name__ == "__main__":
     main()
